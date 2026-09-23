@@ -298,7 +298,7 @@ const resolvePythonExecutable = Effect.fn("antigravityAuthSupport.resolvePythonE
     if (platform !== "linux") return undefined;
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const candidates = ["python3", "python"];
+    const candidates = ["python3"];
     for (const candidate of candidates) {
       const resolved = yield* resolveCommandPath(
         candidate,
@@ -311,7 +311,7 @@ const resolvePythonExecutable = Effect.fn("antigravityAuthSupport.resolvePythonE
         return resolved;
       }
     }
-    for (const fallback of ["/usr/bin/python3", "/bin/python3", "/usr/bin/python"]) {
+    for (const fallback of ["/usr/bin/python3", "/bin/python3"]) {
       const exists = yield* fs.exists(fallback).pipe(Effect.orElseSucceed(() => false));
       if (exists) {
         return fallback;
@@ -476,8 +476,10 @@ export const LINUX_ANTIGRAVITY_SECCOMP_LAUNCHER = [
   "    p = P(1, f)",
   "    if libc.prctl(38, 1, 0, 0, 0) != 0 or libc.prctl(22, 2, ctypes.byref(p)) != 0:",
   '        sys.stderr.write("antigravity launcher: seccomp setup failed, errno %d\\n" % ctypes.get_errno())',
+  "        raise SystemExit(1)",
   "except Exception as error:",
   '    sys.stderr.write("antigravity launcher: seccomp setup failed: %r\\n" % (error,))',
+  "    raise SystemExit(1)",
   "os.execv(sys.argv[1], sys.argv[1:])",
 ].join("\n");
 
