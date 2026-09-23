@@ -795,6 +795,19 @@ it.layer(NodeServices.layer)("Antigravity profile preparation", (it) => {
         pythonExecutable: "",
       });
       expect(optOutProfile.pythonExecutable).toBeUndefined();
+
+      const binDirectory = path.join(temporaryDirectory, "bin");
+      yield* fs.makeDirectory(binDirectory, { recursive: true });
+      const mockPython = path.join(binDirectory, "python3");
+      yield* fs.writeFileString(mockPython, "#!/bin/sh\nexit 0\n");
+      yield* fs.chmod(mockPython, 0o755);
+
+      const discoveredProfile = yield* prepareAntigravityProfile({
+        profileDirectory: path.join(temporaryDirectory, "discovered-profile"),
+        platform: "linux",
+        baseEnv: { PATH: binDirectory },
+      });
+      expect(discoveredProfile.pythonExecutable).toBe(mockPython);
     }),
   );
 });
