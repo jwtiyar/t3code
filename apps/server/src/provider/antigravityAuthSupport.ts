@@ -471,13 +471,13 @@ export const LINUX_ANTIGRAVITY_SECCOMP_LAUNCHER = [
   '        _fields_ = [("c", ctypes.c_uint16), ("jt", ctypes.c_uint8), ("jf", ctypes.c_uint8), ("k", ctypes.c_uint32)]',
   "    class P(ctypes.Structure):",
   '        _fields_ = [("len", ctypes.c_ushort), ("filter", ctypes.POINTER(F))]',
-  "    libc = ctypes.CDLL(None)",
+  "    libc = ctypes.CDLL(None, use_errno=True)",
   "    f = (F * 1)(F(6, 0, 0, 0x7fff0000))",
   "    p = P(1, f)",
-  "    libc.prctl(38, 1, 0, 0, 0)",
-  "    libc.prctl(22, 2, ctypes.byref(p))",
-  "except Exception:",
-  "    pass",
+  "    if libc.prctl(38, 1, 0, 0, 0) != 0 or libc.prctl(22, 2, ctypes.byref(p)) != 0:",
+  '        sys.stderr.write("antigravity launcher: seccomp setup failed, errno %d\\n" % ctypes.get_errno())',
+  "except Exception as error:",
+  '    sys.stderr.write("antigravity launcher: seccomp setup failed: %r\\n" % (error,))',
   "os.execv(sys.argv[1], sys.argv[1:])",
 ].join("\n");
 
@@ -501,7 +501,13 @@ export function buildAntigravityAcpSpawnInput(input: {
     ? input.profile.pythonExecutable!
     : input.installation.executablePath;
   const args = useLinuxSeccompLauncher
-    ? ["-c", LINUX_ANTIGRAVITY_SECCOMP_LAUNCHER, input.installation.executablePath, ...linuxArgs]
+    ? [
+        "-I",
+        "-c",
+        LINUX_ANTIGRAVITY_SECCOMP_LAUNCHER,
+        input.installation.executablePath,
+        ...linuxArgs,
+      ]
     : input.profile.platform === "linux"
       ? linuxArgs
       : [];

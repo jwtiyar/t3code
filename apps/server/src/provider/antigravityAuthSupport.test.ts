@@ -126,6 +126,7 @@ describe("Antigravity process environment", () => {
 
     expect(spawn.command).toBe("/usr/bin/python3");
     expect(spawn.args).toEqual([
+      "-I",
       "-c",
       LINUX_ANTIGRAVITY_SECCOMP_LAUNCHER,
       "/release/acp",
